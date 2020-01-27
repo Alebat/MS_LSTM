@@ -1,45 +1,29 @@
-from dataloader import videoDataset, transform
-from model import Scoring
-import torch.nn as nn
-import torch
-import torch.utils.data as data
-import torch.optim as optim
-from torch.optim import lr_scheduler
-from torch.autograd import Variable
-import numpy as np
-from scipy.stats import spearmanr as sr
-import random
 import argparse
-parser = argparse.ArgumentParser()
-parser.add_argument('-n', '--name', help="model name")
-parser.add_argument('--root', help="data root")
-parser.add_argument('--pcs', action="store_true", help="predict pcs score")
-args = parser.parse_args()
-# load the train and test dataset
-"""
-samples = []
-f = open("./data/annotations.txt").readlines()
-w = open("./result/final_result.txt", 'w')
-for line in f:
-    items = line.strip().split(' ')
-    samples.append((items[0], float(items[1])))
-"""
-w = open('./logs/merge_tes_40attn.log', 'w')
-loss_log = open('./loss_log/' + args.name + '.txt', 'w')
+
+import numpy as np
+import torch
+import torch.optim as optim
+import torch.utils.data as data
+from scipy.stats import spearmanr as sr
+from torch.autograd import Variable
+from torch.optim import lr_scheduler
+
+from .dataloader import videoDataset, transform
+from .model import Scoring
 
 
-def train_shuffle(min_mse=200, max_corr=0):
+def train_shuffle(min_mse=200, max_corr=0, loss_log=None):
     round_max_spea = 0
     round_min_mse = 200
     # random.shuffle(f)
     # train = samples[:100]
     # test = samples[100:]
     trainset = videoDataset(root=args.root,
-                            label="./data/train_dataset.txt", suffix=".npy", transform=transform, data=None, pcs=args.pcs)
+                            label="./data/train_dataset.txt", suffix=".npy", transform=transform, data=None)
     trainLoader = torch.utils.data.DataLoader(trainset,
                                               batch_size=128, shuffle=True, num_workers=0)
     testset = videoDataset(root=args.root,
-                           label="./data/test_dataset.txt", suffix='.npy', transform=transform, data=None, pcs=args.pcs)
+                           label="./data/test_dataset.txt", suffix='.npy', transform=transform, data=None)
     testLoader = torch.utils.data.DataLoader(testset,
                                              batch_size=64, shuffle=False, num_workers=0)
 
@@ -49,7 +33,7 @@ def train_shuffle(min_mse=200, max_corr=0):
         scoring.cuda()  # turn the model into gpu
     # scoring.load_state_dict(torch.load("./models/merge/pcs.pt"))
     total_params = sum(p.numel() for p in scoring.parameters() if p.requires_grad)
-    loss_log.write("Total Params: " + str(total_params) + '\n')
+    print("Total Params: " + str(total_params))
     optimizer = optim.Adam(params=scoring.parameters(), lr=0.0005)  # use SGD optimizer to optimize the loss function
     scheduler = lr_scheduler.StepLR(optimizer, step_size=70, gamma=0.7)
     for epoch in range(500):  # total 40 epoches
@@ -108,13 +92,30 @@ def train_shuffle(min_mse=200, max_corr=0):
         print("Val Loss: %.2f Correlation: %.2f Min Val Loss: %.2f Max Correlation: %.2f" %
               (val_loss / val_sample, val_sr, min_mse, max_corr))
         scoring.train()
-    w.write('MSE: %.2f spearman: %.2f' % (round_min_mse, round_max_spea))
+    print('MSE: %.2f spearman: %.2f' % (round_min_mse, round_max_spea))
     return min_mse, max_corr
 
 
-min_mse = 200
-max_corr = 0
-for time in range(5):
-    min_mse, max_corr = train_shuffle(min_mse, max_corr)
-w.close()
-loss_log.close()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--name', help="model name")
+    parser.add_argument('--root', help="data root")
+    parser.add_argument('--pcs', action="store_true", help="predict pcs score")
+    args = parser.parse_args()
+    # load the train and test dataset
+    """
+    samples = []
+    f = open("./data/annotations.txt").readlines()
+    w = open("./result/final_result.txt", 'w')
+    for line in f:
+        items = line.strip().split(' ')
+        samples.append((items[0], float(items[1])))
+    """
+    w = open('./logs/merge_tes_40attn.log', 'w')
+    loss_log = open('./loss_log/' + args.name + '.txt', 'w')
+    min_mse = 200
+    max_corr = 0
+    for time in range(5):
+        min_mse, max_corr = train_shuffle(min_mse, max_corr)
+    w.close()
+    loss_log.close()

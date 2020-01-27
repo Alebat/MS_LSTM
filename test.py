@@ -1,15 +1,12 @@
-from dataloader import videoDataset, transform
-from model import Scoring
-import torch.nn as nn
+import numpy as np
 import torch
 import torch.utils.data as data
-import torch.optim as optim
-from torch.optim import lr_scheduler
 from torch.autograd import Variable
-import numpy as np
-from scipy.stats import spearmanr as sr
-import random
-#load the train and test dataset
+
+from .dataloader import videoDataset, transform
+from .model import Scoring
+
+# load the train and test dataset
 """
 samples = []
 f = open("./data/annotations.txt").readlines()
@@ -18,6 +15,8 @@ for line in f:
     samples.append((items[0], float(items[1])))
 """
 w = open("./result/final_result.txt", 'w')
+
+
 def test_shuffle():
     #random.shuffle(f)
     #train = samples[:100]
@@ -55,6 +54,7 @@ def test_shuffle():
         val_pred = np.concatenate(val_pred)
     for i in range(val_truth.shape[0]):
         w.write('GT: ' + str(val_truth[i]) + '\t' + "Pred: "+  str(val_pred[i]) + 'Res: ' + str(val_truth[i]-val_pred[i]) + '\n')
+
 
 for time in range(1):
     test_shuffle()

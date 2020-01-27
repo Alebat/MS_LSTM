@@ -1,14 +1,15 @@
+import numpy as np
 import torch
-import torch.nn.functional as F
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.autograd import Variable
+from torch.nn.init import xavier_uniform_ as xavier_uniform
 from torch.nn.modules.rnn import RNNCellBase
 from torch.nn.parameter import Parameter
-from torch.nn.init import xavier_uniform_ as xavier_uniform
-from rnn_cells.basic_rnn_cells import BasicLSTMCell, BasicGRUCell
-from rnn_cells.skip_rnn_cells import SkipLSTMCell, SkipGRUCell, MultiSkipLSTMCell, MultiSkipGRUCell
-import math
-import numpy as np
+
+from .basic_rnn_cells import BasicLSTMCell, BasicGRUCell
+from .skip_rnn_cells import SkipLSTMCell, SkipGRUCell, MultiSkipLSTMCell, MultiSkipGRUCell
+
 
 class CCellBase(RNNCellBase):
 

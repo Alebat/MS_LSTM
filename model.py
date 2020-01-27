@@ -1,10 +1,7 @@
-import torch.nn as nn
-import torch
-from torch.autograd import Variable
-import argparse
-import numpy as np
 import torch.nn.functional as F
-from util.graph_definition import *
+
+from .util.graph_definition import *
+
 
 class selfAttn(nn.Module):
     def __init__(self, feature_size, hidden_size, num_desc):
@@ -46,6 +43,7 @@ class conv_lstm(nn.Module):
         output = self.lstm(input)
         output, hx, updated_state = split_rnn_outputs('skip_lstm', output)
         return output[:, -1, :]
+
 
 class Scoring(nn.Module):
     def __init__(self, feature_size):

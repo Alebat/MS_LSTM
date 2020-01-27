@@ -1,6 +1,7 @@
 import os
 from tensorboard_logger import configure, log_value
 
+
 class Logger(object):
     def __init__(self, log_dir, remove_previous_files = False):
         # clean previous logged data under the same directory name

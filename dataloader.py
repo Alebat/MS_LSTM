@@ -1,9 +1,8 @@
+import numpy as np
 import os
+import random
 import torch
 import torch.utils.data as data
-import numpy as np
-from torchvision.transforms import Normalize, CenterCrop
-import random
 
 
 def default_loader(path):
@@ -27,21 +26,17 @@ def transform(fea, max_frames):
 
 class videoDataset(data.Dataset):
     def __init__(self, root, label, transform=None, target_transform=None,
-                 suffix=".binary", loader=default_loader, data=None, pcs=True):
+                 suffix=".binary", loader=default_loader, data=None):
         if data is not None:
             videos = data
         else:
-            fh = open(label)
-            videos = []
-            for line in fh.readlines():
-                video_id, tes, pcs, failure = line.strip().split(' ')
-                video_id += suffix
-                tes = float(tes)
-                pcs = float(pcs)
-                if pcs:
-                    videos.append((video_id, pcs))
-                else:
-                    videos.append((video_id, tes))
+            with open(label) as fh:
+                videos = []
+                for line in fh.readlines():
+                    video_id, mark = line.strip().split(',')
+                    video_id += suffix
+                    mark = float(mark)
+                    videos.append((video_id, mark))
         self.root = root
         self.videos = videos
         self.transform = lambda x: transform(x, 300)
@@ -51,8 +46,6 @@ class videoDataset(data.Dataset):
 
     def __getitem__(self, index):
         fn, score = self.videos[index]
-        if not fn.endswith(self.suffix):
-            fn = fn + self.suffix
         fea = self.loader(os.path.join(self.root, fn))
         if self.transform is not None:
             fea = self.transform(fea)
@@ -65,7 +58,7 @@ class videoDataset(data.Dataset):
 
 if __name__ == "__main__":
     # torch.utils.data.DataLoader
-    dataset = videoDataset(root="/home/xcm/c3d_feat",
+    dataset = videoDataset(root="runs/extract_c3d_fc6",
                            label="./data/train_dataset.txt")
     videoLoader = torch.utils.data.DataLoader(dataset,
                                               batch_size=16, shuffle=True, num_workers=0)
@@ -73,4 +66,4 @@ if __name__ == "__main__":
     for i, (features, scores) in enumerate(videoLoader):
         import pdb
         pdb.set_trace()
-        print((i, len(labels)))
+        print((i, len(features)))

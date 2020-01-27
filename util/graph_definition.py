@@ -3,20 +3,14 @@ Graph creation functions.
 """
 
 
-from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import print_function
 
-import torch
-import torch.nn as nn
-from torch.autograd import Variable
+from ..rnn_cells.custom_cells import CBasicLSTMCell, CBasicGRUCell, \
+    CSkipLSTMCell, CSkipGRUCell, \
+    CMultiSkipLSTMCell, CMultiSkipGRUCell
+from ..util.misc import *
 
-from rnn_cells.base_rnn import custom_LSTM
-from rnn_cells.custom_cells import CBasicLSTMCell, CBasicGRUCell, \
-                                            CSkipLSTMCell, CSkipGRUCell, \
-                                            CMultiSkipLSTMCell, CMultiSkipGRUCell
-
-
-from util.misc import *
 
 def create_model(model, input_size, hidden_size, num_layers):
     """
