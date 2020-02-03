@@ -26,17 +26,19 @@ def transform(fea, max_frames):
 
 class videoDataset(data.Dataset):
     def __init__(self, root, label, transform=None, target_transform=None,
-                 suffix=".binary", loader=default_loader, data=None):
+                 suffixes=".binary", loader=default_loader, data=None, augmented=False):
         if data is not None:
             videos = data
         else:
+            if isinstance(suffixes, str):
+                suffixes = [suffixes]
             with open(label) as fh:
                 videos = []
                 for line in fh.readlines():
                     video_id, mark = line.strip().split(',')
-                    video_id += suffix
                     mark = float(mark)
-                    videos.append((video_id, mark))
+                    for suffix in suffixes:
+                        videos.append((f'{video_id}{suffix}', mark))
         self.root = root
         self.videos = videos
         self.transform = lambda x: transform(x, 300)
