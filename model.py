@@ -60,6 +60,14 @@ def get_scoring_model(name):
         return ScoringDropoutAtteOnly(4096, dropout_p=0.7)
     elif name == 'scoring-dropout.5-monogruonly':
         return ScoringDropoutMonoGruOnly(4096, dropout_p=0.5)
+    elif name == 'scoring-dropout.5-diversity.128':
+        return ScoringDropout(4096, dropout_p=0.5, atte_diversity=128)
+    elif name == 'scoring-dropout.5-nn_grus':
+        return ScoringDropout(4096, dropout_p=0.5, rec_model='nn_gru')
+    elif name == 'scoring-dropout.5-nn_lstms':
+        return ScoringDropout(4096, dropout_p=0.5, rec_model='nn_lstm')
+    elif name == 'scoring-dropout.5-skip_grus':
+        return ScoringDropout(4096, dropout_p=0.5, rec_model='skip_gru')
 
     raise NameError(f'Model {name} not implemented.')
 
@@ -128,7 +136,7 @@ class Scoring(nn.Module):
 
 
 class ScoringDropout(nn.Module):
-    def __init__(self, feature_size, dropout_p=0.5):
+    def __init__(self, feature_size, dropout_p=0.5, atte_diversity=256, rec_model='skip_lstm'):
         super(ScoringDropout, self).__init__()
 
         conv_input = 128
@@ -138,9 +146,9 @@ class ScoringDropout(nn.Module):
             nn.BatchNorm1d(conv_input)
         )
         hidden_size = 256
-        self.scale1 = conv_lstm(hidden_size, 2, 1, 256, conv_input)
-        self.scale2 = conv_lstm(hidden_size, 4, 2, 256, conv_input)
-        self.scale3 = conv_lstm(hidden_size, 8, 4, 256, conv_input)
+        self.scale1 = conv_lstm(hidden_size, 2, 1, atte_diversity, conv_input, rec_model)
+        self.scale2 = conv_lstm(hidden_size, 4, 2, atte_diversity, conv_input, rec_model)
+        self.scale3 = conv_lstm(hidden_size, 8, 4, atte_diversity, conv_input, rec_model)
         self.attn = selfAttn(conv_input, 64, 50)
         self.lstm = nn.LSTM(input_size=conv_input, hidden_size=hidden_size, num_layers=1, batch_first=True)
         self.linear_skip1 = nn.Linear(hidden_size, 64)
