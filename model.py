@@ -47,27 +47,29 @@ class conv_lstm(nn.Module):
         return output[:, -1, :]
 
 
-def get_scoring_model(name):
+def get_scoring_model(name, featn=4096):
     if name == 'scoring':
-        return Scoring(4096)
+        return Scoring(featn)
     elif name == 'scoring-dropout.5':
-        return ScoringDropout(4096, dropout_p=0.5)
+        return ScoringDropout(featn, dropout_p=0.5)
     elif name == 'scoring-dropout.7':
-        return ScoringDropout(4096, dropout_p=0.7)
+        return ScoringDropout(featn, dropout_p=0.7)
     elif name == 'scoring-dropout.7-multionly':
-        return ScoringDropoutMultiOnly(4096, dropout_p=0.7)
+        return ScoringDropoutMultiOnly(featn, dropout_p=0.7)
     elif name == 'scoring-dropout.7-atteonly':
-        return ScoringDropoutAtteOnly(4096, dropout_p=0.7)
+        return ScoringDropoutAtteOnly(featn, dropout_p=0.7)
     elif name == 'scoring-dropout.5-monogruonly':
-        return ScoringDropoutMonoGruOnly(4096, dropout_p=0.5)
+        return ScoringDropoutMonoGruOnly(featn, dropout_p=0.5)
     elif name == 'scoring-dropout.5-diversity.128':
-        return ScoringDropout(4096, dropout_p=0.5, atte_diversity=128)
+        return ScoringDropout(featn, dropout_p=0.5, atte_diversity=128)
+    elif name == 'scoring-dropout.5-diversity.64':
+        return ScoringDropout(featn, dropout_p=0.5, atte_diversity=64)
     elif name == 'scoring-dropout.5-nn_grus':
-        return ScoringDropout(4096, dropout_p=0.5, rec_model='nn_gru')
+        return ScoringDropout(featn, dropout_p=0.5, rec_model='nn_gru')
     elif name == 'scoring-dropout.5-nn_lstms':
-        return ScoringDropout(4096, dropout_p=0.5, rec_model='nn_lstm')
+        return ScoringDropout(featn, dropout_p=0.5, rec_model='nn_lstm')
     elif name == 'scoring-dropout.5-skip_grus':
-        return ScoringDropout(4096, dropout_p=0.5, rec_model='skip_gru')
+        return ScoringDropout(featn, dropout_p=0.5, rec_model='skip_gru')
 
     raise NameError(f'Model {name} not implemented.')
 

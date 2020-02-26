@@ -26,7 +26,7 @@ def transform(fea, max_frames):
 
 class videoDataset(data.Dataset):
     def __init__(self, root, label, transform=None, target_transform=None,
-                 suffixes=".binary", loader=default_loader, data=None, augmented=False):
+                 suffixes=".binary", loader=default_loader, data=None):
         if data is not None:
             videos = data
         else:
@@ -44,7 +44,6 @@ class videoDataset(data.Dataset):
         self.transform = lambda x: transform(x, 300)
         self.target_transform = target_transform
         self.loader = loader
-        self.suffix = suffix
 
     def __getitem__(self, index):
         fn, score = self.videos[index]
