@@ -64,6 +64,8 @@ def get_scoring_model(name, featn=4096):
         return ScoringDropout(featn, dropout_p=0.5, atte_diversity=128)
     elif name == 'scoring-dropout.5-diversity.64':
         return ScoringDropout(featn, dropout_p=0.5, atte_diversity=64)
+    elif name == 'scoring-dropout.5-diversity.32':
+        return ScoringDropout(featn, dropout_p=0.5, atte_diversity=32)
     elif name == 'scoring-dropout.5-nn_grus':
         return ScoringDropout(featn, dropout_p=0.5, rec_model='nn_gru')
     elif name == 'scoring-dropout.5-nn_lstms':
@@ -98,7 +100,6 @@ class Scoring(nn.Module):
         self.cls = nn.Linear(64, 1)
         self.relu = nn.ReLU()
         self.hidden_size = hidden_size
-        self.dropout = nn.Dropout(0.7)
 
     def forward(self, model_input):
         model_input = model_input.permute(0, 2, 1)
