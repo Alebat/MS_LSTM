@@ -66,6 +66,12 @@ def get_scoring_model(name, featn=4096):
         return ScoringDropout(featn, dropout_p=0.5, atte_diversity=64)
     elif name == 'scoring-dropout.5-diversity.32':
         return ScoringDropout(featn, dropout_p=0.5, atte_diversity=32)
+    elif name == 'scoring-dropout.5-diversity.16':
+        return ScoringDropout(featn, dropout_p=0.5, atte_diversity=16)
+    elif name == 'scoring-dropout.5-diversity.16-nn_lstms':
+        return ScoringDropout(featn, dropout_p=0.5, atte_diversity=16, rec_model='nn_lstm')
+    elif name == 'scoring-dropout.5-diversity.16-nn_grus':
+        return ScoringDropout(featn, dropout_p=0.5, atte_diversity=16, rec_model='nn_gru')
     elif name == 'scoring-dropout.5-nn_grus':
         return ScoringDropout(featn, dropout_p=0.5, rec_model='nn_gru')
     elif name == 'scoring-dropout.5-nn_lstms':
