@@ -61,17 +61,19 @@ def get_scoring_model(name, featn=4096):
     elif name == 'scoring-dropout.5-monogruonly':
         return ScoringDropoutMonoGruOnly(featn, dropout_p=0.5)
     elif name == 'scoring-dropout.5-diversity.128':
-        return ScoringDropout(featn, dropout_p=0.5, atte_diversity=128)
+        return ScoringDropout(featn, dropout_p=0.5, m_lstm_conv_output=128)
     elif name == 'scoring-dropout.5-diversity.64':
-        return ScoringDropout(featn, dropout_p=0.5, atte_diversity=64)
+        return ScoringDropout(featn, dropout_p=0.5, m_lstm_conv_output=64)
     elif name == 'scoring-dropout.5-diversity.32':
-        return ScoringDropout(featn, dropout_p=0.5, atte_diversity=32)
+        return ScoringDropout(featn, dropout_p=0.5, m_lstm_conv_output=32)
     elif name == 'scoring-dropout.5-diversity.16':
-        return ScoringDropout(featn, dropout_p=0.5, atte_diversity=16)
+        return ScoringDropout(featn, dropout_p=0.5, m_lstm_conv_output=16)
     elif name == 'scoring-dropout.5-diversity.16-nn_lstms':
-        return ScoringDropout(featn, dropout_p=0.5, atte_diversity=16, rec_model='nn_lstm')
+        return ScoringDropout(featn, dropout_p=0.5, m_lstm_conv_output=16, rec_model='nn_lstm')
     elif name == 'scoring-dropout.5-diversity.16-nn_grus':
-        return ScoringDropout(featn, dropout_p=0.5, atte_diversity=16, rec_model='nn_gru')
+        return ScoringDropout(featn, dropout_p=0.5, m_lstm_conv_output=16, rec_model='nn_gru')
+    elif name == 'scoring-dropout.5-diversity.8-nn_grus':
+        return ScoringDropout(featn, dropout_p=0.5, m_lstm_conv_output=8, rec_model='nn_gru')
     elif name == 'scoring-dropout.5-nn_grus':
         return ScoringDropout(featn, dropout_p=0.5, rec_model='nn_gru')
     elif name == 'scoring-dropout.5-nn_lstms':
@@ -145,7 +147,7 @@ class Scoring(nn.Module):
 
 
 class ScoringDropout(nn.Module):
-    def __init__(self, feature_size, dropout_p=0.5, atte_diversity=256, rec_model='skip_lstm'):
+    def __init__(self, feature_size, dropout_p=0.5, m_lstm_conv_output=256, rec_model='skip_lstm'):
         super(ScoringDropout, self).__init__()
 
         conv_input = 128
@@ -155,9 +157,9 @@ class ScoringDropout(nn.Module):
             nn.BatchNorm1d(conv_input)
         )
         hidden_size = 256
-        self.scale1 = conv_lstm(hidden_size, 2, 1, atte_diversity, conv_input, rec_model)
-        self.scale2 = conv_lstm(hidden_size, 4, 2, atte_diversity, conv_input, rec_model)
-        self.scale3 = conv_lstm(hidden_size, 8, 4, atte_diversity, conv_input, rec_model)
+        self.scale1 = conv_lstm(hidden_size, 2, 1, m_lstm_conv_output, conv_input, rec_model)
+        self.scale2 = conv_lstm(hidden_size, 4, 2, m_lstm_conv_output, conv_input, rec_model)
+        self.scale3 = conv_lstm(hidden_size, 8, 4, m_lstm_conv_output, conv_input, rec_model)
         self.attn = selfAttn(conv_input, 64, 50)
         self.lstm = nn.LSTM(input_size=conv_input, hidden_size=hidden_size, num_layers=1, batch_first=True)
         self.linear_skip1 = nn.Linear(hidden_size, 64)
