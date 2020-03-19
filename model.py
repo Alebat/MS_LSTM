@@ -47,7 +47,7 @@ class conv_lstm(nn.Module):
         return output[:, -1, :]
 
 
-def get_scoring_model(name, featn=4096):
+def get_scoring_model(name, featn=4096, **kwargs):
     if name == 'scoring':
         return Scoring(featn)
     elif name == 'scoring-dropout.5':
@@ -80,6 +80,8 @@ def get_scoring_model(name, featn=4096):
         return ScoringDropout(featn, dropout_p=0.5, rec_model='nn_lstm')
     elif name == 'scoring-dropout.5-skip_grus':
         return ScoringDropout(featn, dropout_p=0.5, rec_model='skip_gru')
+    elif name == 'lighter':
+        return ScoringDropoutLighter(featn, **kwargs)
 
     raise NameError(f'Model {name} not implemented.')
 
@@ -136,6 +138,68 @@ class Scoring(nn.Module):
             )
         ], 1)
         output = self.relu(self.linear_merge(output))
+        return self.cls(output), penal
+
+    def loss(self, regression, actuals):
+        """
+        use mean square error for regression and cross entropy for classification
+        """
+        regr_loss_fn = nn.MSELoss()
+        return regr_loss_fn(regression, actuals)
+
+
+class ScoringDropoutLighter(nn.Module):
+    def __init__(self, feature_size, dropout_p=0.5, rec_model='skip_lstm', tilde_m=256, tilde_d=128,
+                 h_s=256, h_l=64, d_1=64, d_2=50):
+        super(ScoringDropoutLighter, self).__init__()
+
+        self.conv = nn.Sequential(
+            nn.Conv1d(feature_size, tilde_d, 1, 1),
+            nn.ReLU(),
+            nn.BatchNorm1d(tilde_d)
+        )
+        self.scale1 = conv_lstm(h_s, 1, 1, tilde_m, tilde_d, rec_model)
+        self.scale2 = conv_lstm(h_s, 4, 2, tilde_m, tilde_d, rec_model)
+        # self.scale3 = conv_lstm(h_s, 8, 2, tilde_m, tilde_d, rec_model)
+        self.attn = selfAttn(tilde_d, d_1, d_2)
+        self.lstm = nn.LSTM(input_size=tilde_d, hidden_size=h_s, num_layers=1, batch_first=True)
+        self.linear_skip1 = nn.Linear(h_s, h_l)
+        self.linear_skip2 = nn.Linear(h_s, h_l)
+        # self.linear_skip3 = nn.Linear(hidden_size, linear_size)
+        self.linear_attn = nn.Linear(h_s, h_l)
+        self.linear_merge = nn.Linear(h_l * 3, h_l)
+        self.cls = nn.Linear(h_l, 1)
+        self.relu = nn.ReLU()
+        self.hidden_size = h_s
+        self.dropout = nn.Dropout(dropout_p)
+
+    def forward(self, model_input):
+        model_input = model_input.permute(0, 2, 1)
+        model_input = self.conv.forward(model_input).permute(0, 2, 1)
+        attn, penal = self.attn.forward(model_input)
+        attn, _ = self.lstm(attn)
+        attn = attn[:, -1, :]
+        m_output = torch.cat([
+            self.dropout(self.relu(
+                self.linear_skip1(
+                    self.scale1(model_input)
+                ))),
+            self.dropout(self.relu(
+                self.linear_skip2(
+                    self.scale2(model_input)
+                ))),
+            # self.dropout(self.relu(
+            #     self.linear_skip3(
+            #         self.scale3(model_input)
+            #     )))
+        ], 1)
+        output = torch.cat([
+            m_output,
+            self.dropout(self.relu(
+                self.linear_attn(attn)
+            ))
+        ], 1)
+        output = self.dropout(self.relu(self.linear_merge(output)))
         return self.cls(output), penal
 
     def loss(self, regression, actuals):
